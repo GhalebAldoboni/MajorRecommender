@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Career Guidance Chat</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Add Markdown parser library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+    <style>
+        body {
+            background-color: #f5f5f5;
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: 30px auto;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .chat-header {
+            background-color: #4a76a8;
+            color: white;
+            padding: 15px;
+            text-align: center;
+        }
+        .chat-messages {
+            height: 500px;
+            overflow-y: auto;
+            padding: 15px;
+            background-color: white;
+        }
+        .message {
+            margin-bottom: 15px;
+            max-width: 80%;
+        }
+        .bot-message {
+            background-color: #f1f0f0;
+            border-radius: 15px 15px 15px 0;
+            padding: 10px 15px;
+            float: left;
+            clear: both;
+        }
+        .user-message {
+            background-color: #4a76a8;
+            color: white;
+            border-radius: 15px 15px 0 15px;
+            padding: 10px 15px;
+            float: right;
+            clear: both;
+        }
+        .question {
+            font-weight: bold;
+            background-color: #e9f5ff;
+            border-left: 3px solid #4a76a8;
+        }
+        .chat-input {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        .progress {
+            height: 5px;
+            margin-bottom: 0;
+        }
+        .welcome-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 500px;
+            background-color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        .typing-indicator {
+            display: inline-block;
+            margin-left: 10px;
+        }
+        .typing-indicator span {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background-color: #4a76a8;
+            border-radius: 50%;
+            margin: 0 2px;
+            opacity: 0.6;
+            animation: typing 1s infinite;
+        }
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        @keyframes typing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        /* Markdown styling */
+        .bot-message {
+            overflow: auto; /* To contain floats from markdown content */
+        }
+        .bot-message ul, .bot-message ol {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+        .bot-message p {
+            margin-bottom: 10px;
+        }
+        .bot-message h1, .bot-message h2, .bot-message h3, 
+        .bot-message h4, .bot-message h5, .bot-message h6 {
+            margin-top: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .bot-message code {
+            background-color: #f0f0f0;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .bot-message pre {
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 10px;
+        }
+        .bot-message blockquote {
+            border-left: 3px solid #ccc;
+            padding-left: 10px;
+            color: #666;
+            margin-left: 5px;
+        }
+        .bot-message table {
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            width: 100%;
+        }
+        .bot-message th, .bot-message td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .bot-message th {
+            background-color: #f2f2f2;
+        }
+        .bot-message a {
+            color: #0366d6;
+            text-decoration: none;
+        }
+        .bot-message a:hover {
+            text-decoration: underline;
+        }
+        .bot-message img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h2>Career Guidance Survey</h2>
+                <div class="progress">
+                    <div id="progress-bar" class="progress-bar" role="progressbar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div id="welcome-screen" class="welcome-screen">
+                <h3>Welcome to the Career Guidance Chat</h3>
+                <p>I'll ask you a series of questions to help identify suitable career paths for you. Your answers will help me understand your interests, skills, and preferences.</p>
+                <button id="start-chat" class="btn btn-primary btn-lg mt-3">Start Chat</button>
+            </div>
+            
+            <div id="chat-interface" style="display: none;">
+                <div id="chat-messages" class="chat-messages">
+                    <!-- Messages will be added here dynamically -->
+                </div>
+                
+                <div class="chat-input">
+                    <div class="input-group">
+                        <input type="text" id="user-input" class="form-control" placeholder="Type your answer here...">
+                        <button id="send-button" class="btn btn-primary">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const chatInterface = document.getElementById('chat-interface');
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const progressBar = document.getElementById('progress-bar');
+            const startChatButton = document.getElementById('start-chat');
+            
+            // Configure marked options
+            marked.setOptions({
+                breaks: true,        // Convert \n to <br>
+                gfm: true,           // GitHub Flavored Markdown
+                headerIds: false,    // Don't add ids to headers
+                sanitize: false      // Allow HTML
+            });
+            
+            let isWaitingForUserInput = false;
+            let totalQuestions = 0;
+            
+            // Start chat button click
+            startChatButton.addEventListener('click', function() {
+                welcomeScreen.style.display = 'none';
+                chatInterface.style.display = 'block';
+                startChat();
+            });
+            
+            // Send message button click
+            sendButton.addEventListener('click', sendMessage);
+            
+            // Enter key press in input field
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Start the chat by fetching the first question
+            function startChat() {
+                fetch('/start_chat')
+                    .then(response => response.json())
+                    .then(data => {
+                        totalQuestions = data.totalQuestions;
+                        displayChatHistory(data.history);
+                        updateProgress(data.currentQuestion, totalQuestions);
+                        isWaitingForUserInput = true;
+                        scrollToBottom();
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+            
+            // Send user message to server
+            function sendMessage() {
+                if (!isWaitingForUserInput) return;
+                
+                const message = userInput.value.trim();
+                if (message === '') return;
+                
+                isWaitingForUserInput = false;
+                userInput.value = '';
+                
+                // Show typing indicator
+                addTypingIndicator();
+                
+                fetch('/send_message', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: message }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Remove typing indicator
+                    removeTypingIndicator();
+                    
+                    // Display updated chat history
+                    displayChatHistory(data.history);
+                    
+                    // Update progress
+                    if (!data.completed) {
+                        updateProgress(data.currentQuestion, totalQuestions);
+                        isWaitingForUserInput = true;
+                    } else {
+                        updateProgress(totalQuestions, totalQuestions);
+                        userInput.disabled = true;
+                        sendButton.disabled = true;
+                    }
+                    
+                    scrollToBottom();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    removeTypingIndicator();
+                    isWaitingForUserInput = true;
+                });
+            }
+            
+            // Display chat history
+            function displayChatHistory(history) {
+                chatMessages.innerHTML = '';
+                
+                history.forEach(item => {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = `message ${item.sender}-message`;
+                    
+                    if (item.isQuestion) {
+                        messageDiv.className += ' question';
+                    }
+                    
+                    // Apply markdown parsing for bot messages
+                    if (item.sender === 'bot') {
+                        messageDiv.innerHTML = marked.parse(item.message);
+                    } else {
+                        messageDiv.textContent = item.message;
+                    }
+                    
+                    chatMessages.appendChild(messageDiv);
+                });
+            }
+            
+            // Add typing indicator
+            function addTypingIndicator() {
+                const typingDiv = document.createElement('div');
+                typingDiv.className = 'message bot-message';
+                typingDiv.id = 'typing-indicator';
+                
+                const typingIndicator = document.createElement('div');
+                typingIndicator.className = 'typing-indicator';
+                typingIndicator.innerHTML = '<span></span><span></span><span></span>';
+                
+                typingDiv.appendChild(document.createTextNode('Typing '));
+                typingDiv.appendChild(typingIndicator);
+                chatMessages.appendChild(typingDiv);
+                
+                scrollToBottom();
+            }
+            
+            // Remove typing indicator
+            function removeTypingIndicator() {
+                const typingIndicator = document.getElementById('typing-indicator');
+                if (typingIndicator) {
+                    typingIndicator.remove();
+                }
+            }
+            
+            // Update progress bar
+            function updateProgress(current, total) {
+                const progress = (current / total) * 100;
+                progressBar.style.width = progress + '%';
+                progressBar.setAttribute('aria-valuenow', progress);
+            }
+            
+            // Scroll chat to bottom
+            function scrollToBottom() {
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+    </script>
+</body>
+</html>
