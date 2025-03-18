@@ -1,26 +1,12 @@
 from flask import Flask, render_template, request, jsonify, session
 from openai import OpenAI
 import pandas as pd
-import pickle
 import json
 import os
 import random
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # Required for session
-
-dummy_files = ['best_model.pkl', 'scaler.pkl', 'label_encoders.pkl']
-for file in dummy_files:
-    if not os.path.exists(file):
-        with open(file, 'wb') as f:
-            pickle.dump({}, f)
-
-with open('best_model.pkl', 'rb') as f:
-    model = pickle.load(f)
-with open('scaler.pkl', 'rb') as f:
-    scaler = pickle.load(f)
-with open('label_encoders.pkl', 'rb') as f:
-    label_encoders = pickle.load(f)
 
 # Initialize OpenAI client
 client = OpenAI(api_key="sk-1a27d4ea17a2449f96897f8cc0e02875", base_url="https://api.deepseek.com")
