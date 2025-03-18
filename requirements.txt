@@ -3,5 +3,3 @@ openai
 pandas
 gunicorn
 pickle-mixin
-pickle
-sklearn
