@@ -73,6 +73,7 @@ def get_major_recommendation(answers):
     try:
         response = client.chat.completions.create(
             model="deepseek-chat",
+            timeout=60,
             messages=[
                 {"role": "system", "content": "You are a career guidance counselor specializing in recommending university majors based on student preferences and aptitudes."},
                 {"role": "user", "content": prompt}
